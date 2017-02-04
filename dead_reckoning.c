@@ -165,13 +165,52 @@ task main()
 	//	}
 
 	//}
+	float angle1 = -90;
+	float dist1 = 10;
+	float angle2 = -45;
+	float dist2 = 15;
 
+  float opposite = 1;
+	if(angle1 < 0) opposite = -1;
+	float  turnLen = angle1 * 250/90;
+	while(abs(nMotorEncoder[leftMotor]) < abs(turnLen)){
+		motor[leftMotor] = opposite * 50;
+		motor[rightMotor] = opposite * -50;
+	}
+
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
 	float wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
-	while(wheels < distToDegrees(24)) {
+	while(wheels < distToDegrees(dist1)) {
 		wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
 		float p = 0.5;
-		float left = p * (distToDegrees(24) - nMotorEncoder[leftMotor]);
-		float right = p * (distToDegrees(24) - nMotorEncoder[rightMotor]);
+		float left = p * (distToDegrees(dist1) - nMotorEncoder[leftMotor]);
+		float right = p * (distToDegrees(dist1) - nMotorEncoder[rightMotor]);
+		float turnP = 0.5;
+		motor[leftMotor] = capMotor(left) - turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		motor[rightMotor] = capMotor(right) + turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		writeDebugStreamLine("%d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
+	}
+
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
+
+	float opposite1 = 1;
+	if(angle2 < 0) opposite1 = -1;
+	float  turnLen1 = angle2 * 250/90;
+	while(abs(nMotorEncoder[leftMotor]) < abs(turnLen1)){
+		motor[leftMotor] = opposite1 * 50;
+		motor[rightMotor] = opposite1 * -50;
+	}
+
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
+
+		while(wheels < distToDegrees(dist2)) {
+		wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
+		float p = 0.5;
+		float left = p * (distToDegrees(dist2) - nMotorEncoder[leftMotor]);
+		float right = p * (distToDegrees(dist2) - nMotorEncoder[rightMotor]);
 		float turnP = 0.5;
 		motor[leftMotor] = capMotor(left) - turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 		motor[rightMotor] = capMotor(right) + turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
