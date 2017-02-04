@@ -106,7 +106,21 @@ void draw_grid()
    }
  }
 
+float distToDegrees(float dist) {
+	return dist * 0.1470 * 360.0;
+}
 
+float capMotor(float m) {
+	if (m > 80) {
+		return 80;
+	}
+	else if (m < -80) {
+		return 80;
+	}
+	else {
+		return m;
+	}
+}
 /*****************************************
  * Main function - Needs changing
  *****************************************/
@@ -151,9 +165,19 @@ task main()
 	//	}
 
 	//}
-	motor[motorA] = motorPower;	motor[motorB] = motorPower;
-	while(nMotorEncoder[leftMotor] < 360) {
+
+	float wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
+	while(wheels < distToDegrees(24)) {
+		wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
+		float p = 0.5;
+		float left = p * (distToDegrees(24) - nMotorEncoder[leftMotor]);
+		float right = p * (distToDegrees(24) - nMotorEncoder[rightMotor]);
+		float turnP = 0.5;
+		motor[leftMotor] = capMotor(left) - turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		motor[rightMotor] = capMotor(right) + turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		writeDebugStreamLine("%d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
 	}
+
 	motor[motorA] = 0;
 	motor[motorB] = 0;
 	nNxtButtonTask  = 0;
