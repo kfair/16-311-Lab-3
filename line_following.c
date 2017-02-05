@@ -12,10 +12,10 @@ task straight()
 {
 	writeDebugStreamLine("straight");
 	clearTimer(T1);
-	while (time1[T1] < 50)
+	while (time1[T1] < 10000)
 	{
-		motor[leftMotor] = -30;
-		motor[rightMotor] = -30;
+		motor[leftMotor] = -40;
+		motor[rightMotor] = -40;
 
 		int light = SensorValue(lightSensor);
 		if ((light < 50) || (light > 70))
@@ -33,7 +33,7 @@ task left()
 {
 	writeDebugStreamLine("left");
 	clearTimer(T2);
-	while (time1[T2] < 10)
+	while (time1[T2] < 10000)
 	{
 		motor[leftMotor] = 30;
 		motor[rightMotor] = -30;
@@ -53,7 +53,7 @@ task right()
 {
 	writeDebugStreamLine("right");
 	clearTimer(T3);
-	while (time1[T3] < 100)
+	while (time1[T3] < 10000)
 	{
 		motor[leftMotor] = -30;
 		motor[rightMotor] = 30;
