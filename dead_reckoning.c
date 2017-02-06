@@ -18,10 +18,6 @@ float robot_X = 0.0, robot_Y = 0.0, robot_TH = 0.0;
 int velocityUpdateInterval = 5;
 int PIDUpdateInterval = 2;
 
-//Change these during demo
-int inputStraight[2] = {10, 15}; // in inches.
-int inputTurn[2] = {-90, 45}; // in degrees, negative means clockwise rotation
-
 /*****************************************
  * Complete this function so that it
  * continuously updates the robot's position
@@ -133,7 +129,7 @@ void driveStraight(float dist) {
 	nMotorEncoder[rightMotor] = 0;
 	writeDebugStreamLine("Driving straight %d inches", dist);
 	float avgEnc = 0;
-	while(abs(target - avgEnc) > 2) {
+	while(abs(target - avgEnc) > 1) {
 		avgEnc = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
 
 		float left = p * (target- nMotorEncoder[leftMotor]);
@@ -161,13 +157,15 @@ void turnRight(float angle) {
 
 	if (angle < 0) opposite = -1;
 	// Convert the turn length from degrees to rotations.
-	float  turnLen = angle * 250.0 / 90.0;
-	writeDebugStreamLine("Turning right %d degrees", turnLen);
+	float  turnLen = angle * 270.0 / 90.0;
+	writeDebugStreamLine("Turning right %d degrees", angle);
 	// We'll only look at the left encoder for the turn.
-	while(abs(nMotorEncoder[leftMotor] - turnLen) > 2){
+	while(abs(nMotorEncoder[leftMotor] - turnLen) > 1){
 		motor[leftMotor] = opposite * turnSpeed;
 		motor[rightMotor] = opposite * -turnSpeed;
 	}
+	motor[leftMotor] = 0;
+	motor[rightMotor] = 0;
 }
 /*****************************************
  * Main function - Needs changing
@@ -183,9 +181,12 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(inputTurn[0]);
-	driveStraight(inputStraight[0]);
-	turnRight(inputTurn[1]);
-	driveStraight(inputStraight[1]);
+	turnRight(90);
+	driveStraight(12);
+	turnRight(-45);
+	driveStraight(20);
+
+	turnRight(90);
+
 
 }
