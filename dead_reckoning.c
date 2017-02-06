@@ -19,9 +19,8 @@ int velocityUpdateInterval = 5;
 int PIDUpdateInterval = 2;
 
 //Change these during demo
-int inputStraight[2] = {10, 0}; // in mm
-int inputTurn[2] = {0, 0}; // in degrees, negative means clockwise rotation
-int motorPower = 50;
+int inputStraight[2] = {10, 15}; // in inches.
+int inputTurn[2] = {-90, 45}; // in degrees, negative means clockwise rotation
 
 /*****************************************
  * Complete this function so that it
@@ -111,14 +110,63 @@ float distToDegrees(float dist) {
 }
 
 float capMotor(float m) {
-	if (m > 80) {
-		return 80;
+	int cap = 80;
+	if (m > cap) {
+		return cap;
 	}
-	else if (m < -80) {
-		return 80;
+	else if (m < -cap) {
+		return cap;
 	}
 	else {
 		return m;
+	}
+}
+// Takes distance in inches.
+void driveStraight(float dist) {
+
+	float p = 0.5;
+	float turnP = 0.5;
+	// Convert the distance from inches to degrees in the wheel.
+	float target = distToDegrees(dist);
+	// Reset the encoders.
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
+	writeDebugStreamLine("Driving straight %d inches", dist);
+	float avgEnc = 0;
+	while(abs(target - avgEnc) > 2) {
+		avgEnc = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
+
+		float left = p * (target- nMotorEncoder[leftMotor]);
+		float right = p * (target - nMotorEncoder[rightMotor]);
+		// Cap the values so that turn correction has a bigger effect.
+		left = capMotor(left);
+		right = capMotor(right);
+		// Add in corrections for driving straight
+		left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+
+		motor[leftMotor] = left;
+		motor[rightMotor] = right;
+	}
+	motor[leftMotor] = 0;
+	motor[rightMotor] = 0;
+}
+
+void turnRight(float angle) {
+	float turnSpeed = 50;
+	float opposite = 1;
+
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
+
+	if (angle < 0) opposite = -1;
+	// Convert the turn length from degrees to rotations.
+	float  turnLen = angle * 250.0 / 90.0;
+	writeDebugStreamLine("Turning right %d degrees", turnLen);
+	// We'll only look at the left encoder for the turn.
+	while(abs(nMotorEncoder[leftMotor] - turnLen) > 2){
+		motor[leftMotor] = opposite * turnSpeed;
+		motor[rightMotor] = opposite * -turnSpeed;
 	}
 }
 /*****************************************
@@ -127,98 +175,17 @@ float capMotor(float m) {
 task main()
 {
 	/* Reset encoders and turn on PID control */
-	nMotorEncoder[motorB] = 0;
-	nMotorEncoder[motorC] = 0;
-	nMotorPIDSpeedCtrl[motorB] = mtrSpeedReg;
-	nMotorPIDSpeedCtrl[motorC] = mtrSpeedReg;
+	nMotorEncoder[leftMotor] = 0;
+	nMotorEncoder[rightMotor] = 0;
+	nMotorPIDSpeedCtrl[leftMotor] = mtrSpeedReg;
+	nMotorPIDSpeedCtrl[rightMotor] = mtrSpeedReg;
 	nPidUpdateInterval = PIDUpdateInterval;
-
-	int goalStraight = 0;
-	int goalTurn = 0;
-	float start_X = 0;
-	float start_Y = 0;
-	float distTravelled = 0;
 
 	draw_grid();
 	startTask(dead_reckoning);
+	turnRight(inputTurn[0]);
+	driveStraight(inputStraight[0]);
+	turnRight(inputTurn[1]);
+	driveStraight(inputStraight[1]);
 
-	//for(int i = 0; i < 2; i++)
-	//{
-	//	goalStraight = inputStraight[i];
-	//	goalTurn = inputTurn[i];
-
-	//	//
-	//	// Write your own codes for turning
-	//	//
-
-	//	start_X = robot_X;
-	//	start_Y = robot_Y;
-
-	//	motor[motorA] = motorPower;
-	//	motor[motorB] = motorPower;
-
-	//	distTravelled = sqrt(pow(robot_X - start_X, 2) + pow(robot_Y - start_Y, 2));
-
-	//	while (nMotorEncoder[leftWheel] < 360) {
-
-	//		distTravelled = sqrt(pow(robot_X - start_X, 2) + pow(robot_Y - start_Y, 2));
-	//	}
-
-	//}
-	float angle1 = -90;
-	float dist1 = 10;
-	float angle2 = -45;
-	float dist2 = 15;
-
-  float opposite = 1;
-	if(angle1 < 0) opposite = -1;
-	float  turnLen = angle1 * 250/90;
-	while(abs(nMotorEncoder[leftMotor]) < abs(turnLen)){
-		motor[leftMotor] = opposite * 50;
-		motor[rightMotor] = opposite * -50;
-	}
-
-	nMotorEncoder[leftMotor] = 0;
-	nMotorEncoder[rightMotor] = 0;
-	float wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
-	while(wheels < distToDegrees(dist1)) {
-		wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
-		float p = 0.5;
-		float left = p * (distToDegrees(dist1) - nMotorEncoder[leftMotor]);
-		float right = p * (distToDegrees(dist1) - nMotorEncoder[rightMotor]);
-		float turnP = 0.5;
-		motor[leftMotor] = capMotor(left) - turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		motor[rightMotor] = capMotor(right) + turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		writeDebugStreamLine("%d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
-	}
-
-	nMotorEncoder[leftMotor] = 0;
-	nMotorEncoder[rightMotor] = 0;
-
-	float opposite1 = 1;
-	if(angle2 < 0) opposite1 = -1;
-	float  turnLen1 = angle2 * 250/90;
-	while(abs(nMotorEncoder[leftMotor]) < abs(turnLen1)){
-		motor[leftMotor] = opposite1 * 50;
-		motor[rightMotor] = opposite1 * -50;
-	}
-
-	nMotorEncoder[leftMotor] = 0;
-	nMotorEncoder[rightMotor] = 0;
-
-		while(wheels < distToDegrees(dist2)) {
-		wheels = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
-		float p = 0.5;
-		float left = p * (distToDegrees(dist2) - nMotorEncoder[leftMotor]);
-		float right = p * (distToDegrees(dist2) - nMotorEncoder[rightMotor]);
-		float turnP = 0.5;
-		motor[leftMotor] = capMotor(left) - turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		motor[rightMotor] = capMotor(right) + turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		writeDebugStreamLine("%d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
-	}
-
-	motor[motorA] = 0;
-	motor[motorB] = 0;
-	nNxtButtonTask  = 0;
-	while(nNxtButtonPressed != kExitButton) {}
 }
