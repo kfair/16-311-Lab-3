@@ -157,7 +157,7 @@ void turnRight(float angle) {
 
 	if (angle < 0) opposite = -1;
 	// Convert the turn length from degrees to rotations.
-	float  turnLen = angle * 270.0 / 90.0;
+	float  turnLen = angle * 250.0 / 90.0;
 	writeDebugStreamLine("Turning right %d degrees", angle);
 	// We'll only look at the left encoder for the turn.
 	while(abs(nMotorEncoder[leftMotor] - turnLen) > 1){
@@ -181,12 +181,15 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(90);
-	driveStraight(12);
-	turnRight(-45);
-	driveStraight(20);
+	turnRight(-90);
+	wait1Msec(500);
+	driveStraight(24);
+	wait1Msec(500);
+	turnRight(45);
+	wait1Msec(500);
+	driveStraight(18);
 
-	turnRight(90);
+	//turnRight(90);
 
 
 }
