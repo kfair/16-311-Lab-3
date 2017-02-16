@@ -46,8 +46,11 @@ for row in range(len(grid)-1, -1, -1):
     print(formatS % tuple(grid[row]))
 print('\n\n')
 while grid[inToIdx(START[1])][inToIdx(START[0])] == 0:
+    # Iterate through the grid
     for row in range(len(grid)):
         for col in range(len(grid[row])):
+            # If the location == counter, increment the places around it.
+            # (8-point connectivity)
             if grid[row][col] == counter:
                 for i in range(0, 3):
                     for j in range(0, 3):
@@ -58,6 +61,49 @@ while grid[inToIdx(START[1])][inToIdx(START[0])] == 0:
                             grid[row + j - 1][col + i - 1] = counter + 1
     counter = counter + 1
 
-
 for row in range(len(grid)-1, -1, -1):
     print(formatS % tuple(grid[row]))
+
+path = []
+distToGoal = grid[inToIdx(START[1])][inToIdx(START[0])]
+current = grid[inToIdx(END[1])][inToIdx(END[0])]
+
+def findPath(prevPath, row, col):
+    length = grid[row][col]
+    newPath = prevPath[:].append((row, col))
+    if length == distToGoal:
+        return newPath
+    # Try moving straight
+    for i in range(0, 3):
+        r = row + i - 1
+        c = col
+        if (0 <= r and r < HEIGHT_IDX and grid[r][c] == length + 1):
+            p = findPath(newPath, r, c)
+            if len(p) != 0:
+                return p
+        r = row
+        c = col + i - 1
+        if (0 <= c and c < WIDTH_IDX and grid[r][c] == length + 1):
+            p = findPath(newPath, r, c)
+            if len(p) != 0:
+                return p
+    # Then try moving diagonal
+    for i in range(0, 3):
+        r = row + i - 1
+        c = col + i - 1
+        if (0 <= r and r < HEIGHT_IDX and
+            0 <= c and c < WIDTH_IDX and
+            grid[r][c] == length + 1):
+            p = findPath(newPath, r, c)
+            if len(p) != 0:
+                return p
+        r = row - i + 1
+        c = col - i + 1
+        if (0 <= r and r < HEIGHT_IDX and
+            0 <= c and c < WIDTH_IDX and
+            grid[r][c] == length + 1):
+            p = findPath(newPath, r, c)
+            if len(p) != 0:
+                return p
+
+print(findPath([], 0, 0))
