@@ -102,11 +102,15 @@ void draw_grid()
  }
 
 float distToDegrees(float dist) {
-	return dist * 0.1470 * 360.0;
+	//return dist * 0.1470 * 360.0;
+	float mpi = 3.14159;
+	float r = 1.07;							// Decrease to go further
+	float rads = dist / r;
+	return rads / mpi * 180;
 }
 
 float capMotor(float m) {
-	int cap = 80;
+	int cap = 50;
 	if (m > cap) {
 		return cap;
 	}
@@ -120,7 +124,7 @@ float capMotor(float m) {
 // Takes distance in inches.
 void driveStraight(float dist) {
 
-	float p = 0.5;
+	float p = 1;
 	float turnP = 0.5;
 	// Convert the distance from inches to degrees in the wheel.
 	float target = distToDegrees(dist);
@@ -128,11 +132,12 @@ void driveStraight(float dist) {
 	nMotorEncoder[leftMotor] = 0;
 	nMotorEncoder[rightMotor] = 0;
 	writeDebugStreamLine("Driving straight %d inches", dist);
+
 	float avgEnc = 0;
 	while(abs(target - avgEnc) > 1) {
 		avgEnc = (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]) / 2.0;
 
-		float left = p * (target- nMotorEncoder[leftMotor]);
+		float left = p * (target - nMotorEncoder[leftMotor]);
 		float right = p * (target - nMotorEncoder[rightMotor]);
 		// Cap the values so that turn correction has a bigger effect.
 		left = capMotor(left);
@@ -140,6 +145,18 @@ void driveStraight(float dist) {
 		// Add in corrections for driving straight
 		left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 		right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		if (0 < left < 1) {
+			left = 1;
+		}
+		if (-1 < left < 0) {
+			left = -1;
+		}
+		if (0 < right < 1) {
+			right = 1;
+		}
+		if (-1 < right < 0) {
+			right = -1;
+		}
 
 		motor[leftMotor] = left;
 		motor[rightMotor] = right;
@@ -149,7 +166,7 @@ void driveStraight(float dist) {
 }
 
 void turnRight(float angle) {
-	float turnSpeed = 50;
+	float turnSpeed = 25;
 	float opposite = 1;
 
 	nMotorEncoder[leftMotor] = 0;
@@ -157,12 +174,16 @@ void turnRight(float angle) {
 
 	if (angle < 0) opposite = -1;
 	// Convert the turn length from degrees to rotations.
-	float  turnLen = angle * 250.0 / 90.0;
+	float  turnLen = angle * 185 / 90;
 	writeDebugStreamLine("Turning right %d degrees", angle);
 	// We'll only look at the left encoder for the turn.
-	while(abs(nMotorEncoder[leftMotor] - turnLen) > 1){
+	float avgEnc = 0;
+	while(abs(avgEnc - turnLen) > 1){
+		avgEnc = (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]) / 2;
 		motor[leftMotor] = opposite * turnSpeed;
-		motor[rightMotor] = opposite * -turnSpeed;
+		motor[rightMotor] = opposite * (-1.5*turnSpeed);
+		//left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		//right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 	}
 	motor[leftMotor] = 0;
 	motor[rightMotor] = 0;
@@ -181,12 +202,12 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(-90);
-	wait1Msec(500);
-	driveStraight(12);
-	wait1Msec(500);
 	turnRight(90);
 	wait1Msec(500);
-	driveStraight(12);
+	driveStraight(24);
+	wait1Msec(500);
+	turnRight(-90);
+	wait1Msec(500);
+	driveStraight(24);
 
 }
