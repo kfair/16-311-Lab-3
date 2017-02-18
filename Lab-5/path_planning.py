@@ -4,8 +4,7 @@ import math
 
 START = (12, 12)
 START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
-END = (95, 47)
-
+END = (36, 30)
 blocks = [
     (12, 36, 36, 38), # Block 1
     (47, 48, 49, 26), # Block 2
@@ -135,11 +134,17 @@ heading = math.radians(START_HEADING + 90)
 currentPos = START
 for key in path:
     x, y = waypoints[key]
-    targetAngle = math.atan2(y, x)
+    targetAngle = math.atan2(y - currentPos[1], x - currentPos[0])
     diffAngle = normalize_turn(heading - targetAngle)
-    d = distance(currentPos, (x, y))
+    d = distance(currentPos, (x - currentPos[0], y - currentPos[1]))
 
     print('turnRight(' + str(math.degrees(diffAngle)) + ');')
     print('driveStraight(' + str(d) + ');')
     currentPos = (x, y)
     heading = targetAngle
+
+targetAngle = math.atan2(END[1], END[0])
+diffAngle = normalize_turn(heading - targetAngle)
+d = distance(currentPos, END)
+print('turnRight(' + str(math.degrees(diffAngle)) + ');')
+print('driveStraight(' + str(d) + ');')
