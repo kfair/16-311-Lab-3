@@ -135,9 +135,9 @@ heading = math.radians(START_HEADING + 90)
 currentPos = START
 for key in path:
     x, y = waypoints[key]
-    targetAngle = math.atan2(y, x)
+    targetAngle = math.atan2(y - currentPos[1], x - currentPos[0])
     diffAngle = normalize_turn(heading - targetAngle)
-    d = distance(currentPos, (x, y))
+    d = distance(currentPos, (x - currentPos[0], y - currentPos[1]))
 
     print('turnRight(' + str(math.degrees(diffAngle)) + ');')
     print('driveStraight(' + str(d) + ');')
