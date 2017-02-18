@@ -4,7 +4,7 @@ import math
 
 START = (12, 12)
 START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
-END = (95, 47)
+END = (36, 30)
 
 blocks = [
     (12, 36, 36, 38), # Block 1
