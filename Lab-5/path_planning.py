@@ -2,7 +2,7 @@ import math
 
 # All measurements are in inches and degrees.
 
-START = (10, 10)
+START = (12, 12)
 START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
 END = (95, 47)
 
@@ -29,20 +29,22 @@ waypoints = {
     'w33': (blocks[2][2]+WR, blocks[2][1]-WR),
     'w34': (blocks[2][0]-WR, blocks[2][1]-WR),
     # Block 4 waypoints
-    'w41': (86, 28),
+    'w41': (88, 28),
     'w42': (82.75, 24.5),
     # Block 5 waypoints
     'w51': (56, 12),
-    'w52': (70, 26),
+    'w52': (72, 26),
     'w53': (78, 20.5),
-    'w54': (62, 6),
+    'w54': (62, 7),
     # Block 6 waypoints
     'w61': (12, 28),
-    'w62': (35, 16),
-    'w63': (31, 7),
-    'w64': (6, 22)
+    'w62': (36, 16),
+    'w63': (30, 9),
+    'w64': (8, 24)
 }
-
+# For plotting waypoints:
+# for key, val in waypoints.items():
+#     print(str(val))
 connections = {
     # Block 1 waypoints
     'w11': ['w12', 'w14'],
