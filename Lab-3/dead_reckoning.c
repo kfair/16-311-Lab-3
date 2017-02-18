@@ -181,12 +181,12 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(45);
+	turnRight(-90);
 	wait1Msec(500);
-	driveStraight(25.5);
+	driveStraight(12);
 	wait1Msec(500);
 	turnRight(90);
 	wait1Msec(500);
-	driveStraight(25.5);
+	driveStraight(12);
 
 }
