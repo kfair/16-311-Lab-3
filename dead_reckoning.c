@@ -167,6 +167,7 @@ void driveStraight(float dist) {
 void turnRight(float angle) {
 	float turnSpeed = 25;
 	float opposite = 1;
+	float turnP = 1;
 
 	nMotorEncoder[leftMotor] = 0;
 	nMotorEncoder[rightMotor] = 0;
@@ -177,13 +178,20 @@ void turnRight(float angle) {
 	writeDebugStreamLine("Turning right %d degrees", angle);
 	// We'll only look at the left encoder for the turn.
 	float avgEnc = 0;
-	while(abs(avgEnc - turnLen) > 1){
+	while(abs(nMotorEncoder[leftMotor] - turnLen) > 1){
 		avgEnc = (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]) / 2;
-		motor[leftMotor] = opposite * turnSpeed;
-		motor[rightMotor] = opposite * (-1*turnSpeed); //-1.5
-		//left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		//right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
+		int left = opposite * turnSpeed;
+		int right = opposite * (-1*turnSpeed); //-1.5
+		// Cap the values so that turn correction has a bigger effect.
+		left = capMotor(left);
+		right = capMotor(right);
+
+		left -= opposite * turnP * (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]);
+		right += opposite * turnP * (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]);
+		motor[rightMotor] = right;
+		motor[leftMotor] = left;
 	}
+	writeDebugStreamLine("Turn error %d, %d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor], turnLen);
 	motor[leftMotor] = 0;
 	motor[rightMotor] = 0;
 }
@@ -201,25 +209,20 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(153.4);
+	turnRight(-18.43494882292202);
 	wait1Msec(500);
-	driveStraight(4.5);
+	driveStraight(12.649110640673518);
 	wait1Msec(500);
-	turnRight(-38.7);
+	turnRight(34.38034472384487);
 	wait1Msec(500);
-	driveStraight(28.6);
+	driveStraight(7.280109889280518);
 	wait1Msec(500);
-	turnRight(-24.8);
+	turnRight(98.67816888524077);
 	wait1Msec(500);
-	driveStraight(28);
+	driveStraight(26.40075756488817);
 	wait1Msec(500);
-	turnRight(-31);
+	turnRight(-24.623564786163612);
 	wait1Msec(500);
-	driveStraight(11.7);
-	turnRight(-59);
-	driveStraight(10);
-
-	//turnRight(-90);
-	//driveStraight(24);
+	driveStraight(0.0);
 
 }
