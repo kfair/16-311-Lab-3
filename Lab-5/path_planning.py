@@ -1,6 +1,9 @@
 import math
 
+# All measurements are in inches and degrees.
+
 START = (10, 10)
+START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
 END = (95, 47)
 
 blocks = [
@@ -83,7 +86,6 @@ endW = None
 minStart = 0
 minEnd = 0
 for w, coord in waypoints.items():
-
     d = distance(START, coord)
     if startW is None or d < minStart:
         startW = w
@@ -95,6 +97,7 @@ for w, coord in waypoints.items():
 assert(startW is not None and endW is not None)
 
 nodes[startW] = ([startW], 0)
+# Do Dijkstra's
 while nodes[endW][1] < 0:
     closestNewNode = ('', [], -1)
     for key, _ in nodes.items():
@@ -112,4 +115,29 @@ while nodes[endW][1] < 0:
                     closestNewNode = (edge, path, dist)
     nodes[closestNewNode[0]] = (closestNewNode[1], closestNewNode[2])
 
-print(nodes[endW])
+print('Path:')
+path = nodes[endW][0]
+for key in path:
+    print(key + ': ' + str(waypoints[key][0]) + ', ' + str(waypoints[key][1]))
+
+def normalize_turn(angle):
+    while angle < -math.pi:
+        angle += 2 * pi
+    while angle > math.pi:
+        angle -= 2 * pi
+    return angle
+
+print('Commands:')
+# Move our heading such that East is 0 degrees.
+heading = math.radians(START_HEADING + 90)
+currentPos = START
+for key in path:
+    x, y = waypoints[key]
+    targetAngle = math.atan2(y, x)
+    diffAngle = normalize_turn(heading - targetAngle)
+    d = distance(currentPos, (x, y))
+
+    print('turnRight(' + str(math.degrees(diffAngle)) + ');')
+    print('driveStraight(' + str(d) + ');')
+    currentPos = (x, y)
+    heading = targetAngle
