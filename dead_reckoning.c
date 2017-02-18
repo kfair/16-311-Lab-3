@@ -180,7 +180,7 @@ void turnRight(float angle) {
 	while(abs(avgEnc - turnLen) > 1){
 		avgEnc = (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]) / 2;
 		motor[leftMotor] = opposite * turnSpeed;
-		motor[rightMotor] = opposite * (-1.5*turnSpeed);
+		motor[rightMotor] = opposite * (-1*turnSpeed); //-1.5
 		//left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 		//right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 	}
@@ -201,14 +201,25 @@ task main()
 
 	draw_grid();
 	startTask(dead_reckoning);
-	turnRight(-18.435);
-	//wait1Msec(500);
-	driveStraight(12.65);
-	//wait1Msec(500);
-	turnRight(-4.764);
-	//wait1Msec(500);
-	driveStraight(5.657);
-	turnRight(-25.378);
-	driveStraight(22.09);
+	turnRight(153.4);
+	wait1Msec(500);
+	driveStraight(4.5);
+	wait1Msec(500);
+	turnRight(-38.7);
+	wait1Msec(500);
+	driveStraight(28.6);
+	wait1Msec(500);
+	turnRight(-24.8);
+	wait1Msec(500);
+	driveStraight(28);
+	wait1Msec(500);
+	turnRight(-31);
+	wait1Msec(500);
+	driveStraight(11.7);
+	turnRight(-59);
+	driveStraight(10);
+
+	//turnRight(-90);
+	//driveStraight(24);
 
 }

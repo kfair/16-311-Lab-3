@@ -4,7 +4,7 @@ import math
 
 START = (12, 12)
 START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
-END = (36, 30)
+END = (90, 36)
 
 blocks = [
     (12, 36, 36, 38), # Block 1
@@ -37,7 +37,7 @@ waypoints = {
     'w53': (78, 20.5),
     'w54': (62, 7),
     # Block 6 waypoints
-    'w61': (12, 28),
+    'w61': (10, 31),
     'w62': (36, 16),
     'w63': (30, 9),
     'w64': (8, 24)
@@ -124,9 +124,9 @@ for key in path:
 
 def normalize_turn(angle):
     while angle < -math.pi:
-        angle += 2 * pi
+        angle += 2 * math.pi
     while angle > math.pi:
-        angle -= 2 * pi
+        angle -= 2 * math.pi
     return angle
 
 print('Commands:')
@@ -137,9 +137,20 @@ for key in path:
     x, y = waypoints[key]
     targetAngle = math.atan2(y - currentPos[1], x - currentPos[0])
     diffAngle = normalize_turn(heading - targetAngle)
-    d = distance(currentPos, (x - currentPos[0], y - currentPos[1]))
+    d = distance(currentPos, (x, y))
 
     print('turnRight(' + str(math.degrees(diffAngle)) + ');')
     print('driveStraight(' + str(d) + ');')
+    #print(heading*180/3.15)
     currentPos = (x, y)
     heading = targetAngle
+
+targetAngle = math.atan2(END[1] - currentPos[1], END[0] -currentPos[0])
+diffAngle = normalize_turn(heading - targetAngle)
+d = distance(currentPos, END)
+
+print('turnRight(' + str(math.degrees(diffAngle)) + ');')
+print('driveStraight(' + str(d) + ');')
+#print(heading*180/3.14)
+currentPos = (x, y)
+heading = targetAngle
