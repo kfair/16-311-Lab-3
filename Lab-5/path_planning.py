@@ -1,20 +1,8 @@
 import math
-resolution = 2
-HEIGHT = 4 * 12
-WIDTH = 8 * 12
+
 START = (10, 10)
 END = (95, 47)
 
-ROBOT_RADIUS = 1
-BLOCK_WIDTH = 2
-
-WIDTH_IDX = WIDTH // resolution
-HEIGHT_IDX = HEIGHT // resolution
-
-DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-
-
-grid = [[0 for x in range(WIDTH_IDX)] for y in range(HEIGHT_IDX)]
 blocks = [
     (12, 36, 36, 38), # Block 1
     (47, 48, 49, 26), # Block 2
@@ -87,19 +75,33 @@ nodes = {
     'w61':([], -1), 'w62':([], -1), 'w63':([], -1), 'w64':([], -1)
 }
 
-start = ''
-end = ''
-startW = 'w11'
-endW = 'w41'
-nodes[startW] = ([], 0)
+def distance(a, b):
+    return math.sqrt((a[0]-b[0])**2 +(a[1]-b[1])**2)
+
+startW = None
+endW = None
+minStart = 0
+minEnd = 0
+for w, coord in waypoints.items():
+
+    d = distance(START, coord)
+    if startW is None or d < minStart:
+        startW = w
+        minStart = d
+    d = distance(END, coord)
+    if endW is None or d < minEnd:
+        endW = w
+        minEnd = d
+assert(startW is not None and endW is not None)
+
+nodes[startW] = ([startW], 0)
 while nodes[endW][1] < 0:
     closestNewNode = ('', [], -1)
     for key, _ in nodes.items():
         # Get our discovered and check their connections.
         if (nodes[key][1] != -1):
             for edge in connections[key]:
-                edgeLen = math.sqrt((waypoints[key][0]-waypoints[edge][0])**2 +
-                    (waypoints[key][1]-waypoints[edge][1])**2)
+                edgeLen = distance(waypoints[key], waypoints[edge])
                 dist = nodes[key][1] + edgeLen
                 # If this node is the closest and the endpoint is a point that
                 # is not yet discovered.
@@ -109,3 +111,5 @@ while nodes[endW][1] < 0:
                     path.append(edge)
                     closestNewNode = (edge, path, dist)
     nodes[closestNewNode[0]] = (closestNewNode[1], closestNewNode[2])
+
+print(nodes[endW])
