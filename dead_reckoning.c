@@ -12,93 +12,7 @@
 
 //Global variables - you will need to change some of these
 //Robot's positions
-float robot_X = 0.0, robot_Y = 0.0, robot_TH = 0.0;
-
-int velocityUpdateInterval = 5;
 int PIDUpdateInterval = 2;
-
-/*****************************************
- * Complete this function so that it
- * continuously updates the robot's position
- *****************************************/
-task dead_reckoning()
-{
-
-	while(1)
-	{
-		//
-		// Fill in code for numerical integration / position estimation here
-		//
-
-		/*Code that plots the robot's current position and also prints it out as text*/
-		nxtSetPixel(50 + (int)(100.0 * robot_X), 32 + (int)(100.0 * robot_Y));
-		nxtDisplayTextLine(0, "X: %f", robot_X);
-		nxtDisplayTextLine(1, "Y: %f", robot_Y);
-		nxtDisplayTextLine(2, "t: %f", robot_TH);
-
-		wait1Msec(velocityUpdateInterval);
-	}
-}
-
-/*****************************************
- * Function that draws a grid on the LCD
- * for easier readout of whatever is plot
- *****************************************/
-void draw_grid()
-{
-	for(int i = 0; i < 65; i++)
-	{
-		nxtSetPixel(50, i);
-		int grid5 = (i - 32) % 5;
-		int grid10 = (i - 32) % 10;
-		if(!grid5 && grid10)
-		{
-			for(int j = -2; j < 3; j++)
-			{
-				nxtSetPixel(50 + j, i);
-			}
-		}
-		else if(!grid10)
-		{
-			for(int j = -4; j < 5; j++)
-			{
-				nxtSetPixel(50 + j, i);
-			}
-		}
-	}
-	for(int i = 0; i < 101; i++)
-	{
-		nxtSetPixel(i, 32);
-		int grid5 = (i - 100) % 5;
-		int grid10 = (i - 100) % 10;
-		if(!grid5 && grid10)
-		{
-			for(int j = -2; j < 3; j++)
-			{
-				nxtSetPixel(i, 32 + j);
-			}
-		}
-		else if(!grid10)
-		{
-			for(int j = -4; j < 5; j++)
-			{
-				nxtSetPixel(i, 32 + j);
-			}
-		}
-	}
-}
-
-/**********************************************
- * Function that judges if two floats are equal
- **********************************************/
- bool equal(float a, float b) {
-   float epsilon = 1;
-   if (abs(a-b) < epsilon) {
-     return true;
-   } else {
-     return false;
-   }
- }
 
 float distToDegrees(float dist) {
 	//return dist * 0.1470 * 360.0;
@@ -109,12 +23,12 @@ float distToDegrees(float dist) {
 }
 
 float capMotor(float m) {
-	int cap = 50;
+	int cap = 30;
 	if (m > cap) {
 		return cap;
 	}
 	else if (m < -cap) {
-		return cap;
+		return -cap;
 	}
 	else {
 		return m;
@@ -144,18 +58,6 @@ void driveStraight(float dist) {
 		// Add in corrections for driving straight
 		left -= turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
 		right += turnP * (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]);
-		if (0 < left < 1) {
-			left = 1;
-		}
-		if (-1 < left < 0) {
-			left = -1;
-		}
-		if (0 < right < 1) {
-			right = 1;
-		}
-		if (-1 < right < 0) {
-			right = -1;
-		}
 
 		motor[leftMotor] = left;
 		motor[rightMotor] = right;
@@ -165,31 +67,39 @@ void driveStraight(float dist) {
 }
 
 void turnRight(float angle) {
-	float turnSpeed = 25;
+	float turnSpeed = 5;
 	float opposite = 1;
-	float turnP = 1;
 
 	nMotorEncoder[leftMotor] = 0;
 	nMotorEncoder[rightMotor] = 0;
 
 	if (angle < 0) opposite = -1;
 	// Convert the turn length from degrees to rotations.
-	float  turnLen = angle * 185 / 90;
+	float  turnLen = angle * 200 / 90;
 	writeDebugStreamLine("Turning right %d degrees", angle);
-	// We'll only look at the left encoder for the turn.
-	float avgEnc = 0;
-	while(abs(nMotorEncoder[leftMotor] - turnLen) > 1){
-		avgEnc = (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]) / 2;
-		int left = opposite * turnSpeed;
-		int right = opposite * (-1*turnSpeed); //-1.5
-		// Cap the values so that turn correction has a bigger effect.
-		left = capMotor(left);
-		right = capMotor(right);
 
-		left -= opposite * turnP * (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]);
-		right += opposite * turnP * (nMotorEncoder[leftMotor] + nMotorEncoder[rightMotor]);
-		motor[rightMotor] = right;
-		motor[leftMotor] = left;
+	while(opposite * -(nMotorEncoder[leftMotor] - turnLen) > 1 || opposite * (nMotorEncoder[rightMotor] + turnLen) > 1){
+		//avgEnc = (nMotorEncoder[leftMotor] - nMotorEncoder[rightMotor]) / 2;
+		int left = opposite * turnSpeed;
+		int right = opposite * (-1*turnSpeed);
+		if (opposite * -(nMotorEncoder[leftMotor] - turnLen) > 1) {
+			motor[leftMotor] = left;
+		}
+		else if (opposite * -(nMotorEncoder[leftMotor] - turnLen) < -1) {
+			motor[leftMotor] = -left;
+		}
+		else {
+			motor[leftMotor] = 0;
+		}
+		if (opposite * (nMotorEncoder[rightMotor] + turnLen) > 1) {
+			motor[rightMotor] = right;
+		}
+		else if (opposite * (nMotorEncoder[rightMotor] + turnLen) < -1) {
+			motor[rightMotor] = right;
+		}
+		else {
+			motor[rightMotor] = 0;
+		}
 	}
 	writeDebugStreamLine("Turn error %d, %d, %d", nMotorEncoder[leftMotor], nMotorEncoder[rightMotor], turnLen);
 	motor[leftMotor] = 0;
@@ -206,23 +116,23 @@ task main()
 	nMotorPIDSpeedCtrl[leftMotor] = mtrSpeedReg;
 	nMotorPIDSpeedCtrl[rightMotor] = mtrSpeedReg;
 	nPidUpdateInterval = PIDUpdateInterval;
-
-	draw_grid();
-	startTask(dead_reckoning);
 	turnRight(-18.43494882292202);
 	wait1Msec(500);
 	driveStraight(12.649110640673518);
 	wait1Msec(500);
-	turnRight(34.38034472384487);
+	turnRight(-38.38653951768523);
 	wait1Msec(500);
-	driveStraight(7.280109889280518);
+	driveStraight(-31.064449134018133);
 	wait1Msec(500);
-	turnRight(98.67816888524077);
+	turnRight(-33.17851165939276);
 	wait1Msec(500);
-	driveStraight(26.40075756488817);
+	driveStraight(-28.0);
 	wait1Msec(500);
-	turnRight(-24.623564786163612);
+	turnRight(-40.15599962491933);
 	wait1Msec(500);
-	driveStraight(0.0);
-
+	driveStraight(-20.93442141545832);
+	wait1Msec(500);
+	turnRight(-85.06159334327336);
+	wait1Msec(500);
+	driveStraight(10.404326023342406);
 }
