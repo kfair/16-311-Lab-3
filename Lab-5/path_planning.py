@@ -4,7 +4,7 @@ import math
 
 START = (12, 12)
 START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
-END = (90, 36)
+END = (84, 12)
 
 blocks = [
     (12, 36, 36, 38), # Block 1
@@ -33,13 +33,13 @@ waypoints = {
     'w42': (82.75, 24.5),
     # Block 5 waypoints
     'w51': (56, 12),
-    'w52': (72, 26),
+    'w52': (72, 30),
     'w53': (78, 20.5),
     'w54': (62, 7),
     # Block 6 waypoints
     'w61': (10, 31),
     'w62': (36, 16),
-    'w63': (30, 9),
+    'w63': (34, 7),
     'w64': (8, 24)
 }
 # For plotting waypoints:
@@ -131,25 +131,44 @@ def normalize_turn(angle):
 
 print('Commands:')
 # Move our heading such that East is 0 degrees.
-heading = math.radians(START_HEADING + 90)
+heading = normalize_turn(math.radians(START_HEADING + 90))
 currentPos = START
 for key in path:
     x, y = waypoints[key]
     targetAngle = math.atan2(y - currentPos[1], x - currentPos[0])
     diffAngle = normalize_turn(heading - targetAngle)
     d = distance(currentPos, (x, y))
-
-    print('turnRight(' + str(math.degrees(diffAngle)) + ');')
-    print('driveStraight(' + str(d) + ');')
-    #print(heading*180/3.15)
     currentPos = (x, y)
     heading = targetAngle
+    if (diffAngle > math.pi/2):
+        diffAngle -= math.pi
+        heading += normalize_turn(math.pi)
+        d = -d
+    if (diffAngle < -math.pi/2):
+        diffAngle -= math.pi
+        heading += normalize_turn(math.pi)
+        d = -d
+
+    print('turnRight(' + str(math.degrees(diffAngle)) + ');')
+    print('wait1Msec(500);')
+    print('driveStraight(' + str(d) + ');')
+    print('wait1Msec(500);')
+    #print(heading*180/3.15)
+
 
 targetAngle = math.atan2(END[1] - currentPos[1], END[0] -currentPos[0])
 diffAngle = normalize_turn(heading - targetAngle)
 d = distance(currentPos, END)
-
+if (diffAngle > math.pi/2):
+    diffAngle -= math.pi
+    heading += normalize_turn(math.pi)
+    d = -d
+if (diffAngle < -math.pi/2):
+    diffAngle -= math.pi
+    heading += normalize_turn(math.pi)
+    d = -d
 print('turnRight(' + str(math.degrees(diffAngle)) + ');')
+print('wait1Msec(500);')
 print('driveStraight(' + str(d) + ');')
 #print(heading*180/3.14)
 currentPos = (x, y)
