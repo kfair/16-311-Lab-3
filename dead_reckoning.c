@@ -123,27 +123,17 @@ task main()
 	nMotorPIDSpeedCtrl[leftMotor] = mtrSpeedReg;
 	nMotorPIDSpeedCtrl[rightMotor] = mtrSpeedReg;
 	nPidUpdateInterval = PIDUpdateInterval;
-turnRight(90.0);
+	//turnRight(-45.0);
+	//while(nNxtButtonPressed != 3) {}
+	turnRight(-63.43494882292201);
 wait1Msec(100);
-driveStraight(8.0);
+driveStraight(-17.88854381999832);
 wait1Msec(100);
-turnRight(53.13010235415598);
+turnRight(63.43494882292201);
 wait1Msec(100);
-driveStraight(10.0);
+driveStraight(-10.0);
 wait1Msec(100);
-turnRight(83.99099404250548);
+turnRight(-90.0);
 wait1Msec(100);
-driveStraight(-19.1049731745428);
-wait1Msec(100);
-turnRight(18.916414628760357);
-wait1Msec(100);
-driveStraight(-7.386643351347079);
-wait1Msec(100);
-turnRight(-20.15610702883966);
-wait1Msec(100);
-driveStraight(-11.491844934561204);
-wait1Msec(100);
-turnRight(-87.06732916229177);
-wait1Msec(100);
-driveStraight(-10.63014581273465);
+driveStraight(16.0);
 }
