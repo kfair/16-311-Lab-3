@@ -17,18 +17,25 @@ int PIDUpdateInterval = 2;
 float distToDegrees(float dist) {
 	//return dist * 0.1470 * 360.0;
 	float mpi = 3.14159;
-	float r = 1.07;							// Decrease to go further
+	float r = 1.08;							// Decrease to go further
 	float rads = dist / r;
 	return rads / mpi * 180;
 }
 
 float capMotor(float m) {
-	int cap = 30;
+	int cap = 45;
+	int min = 10;
 	if (m > cap) {
 		return cap;
 	}
 	else if (m < -cap) {
 		return -cap;
+	}
+	else if(m < min && m > 0) {
+		return min;
+	}
+	else if(m > -min && m <= 0) {
+		return -min;
 	}
 	else {
 		return m;
@@ -38,7 +45,7 @@ float capMotor(float m) {
 void driveStraight(float dist) {
 
 	float p = 1;
-	float turnP = 0.5;
+	float turnP = 10;
 	// Convert the distance from inches to degrees in the wheel.
 	float target = distToDegrees(dist);
 	// Reset the encoders.
@@ -75,7 +82,7 @@ void turnRight(float angle) {
 
 	if (angle < 0) opposite = -1;
 	// Convert the turn length from degrees to rotations.
-	float  turnLen = angle * 200 / 90;
+	float  turnLen = angle * 195 / 90;
 	writeDebugStreamLine("Turning right %d degrees", angle);
 
 	while(opposite * -(nMotorEncoder[leftMotor] - turnLen) > 1 || opposite * (nMotorEncoder[rightMotor] + turnLen) > 1){
@@ -116,23 +123,27 @@ task main()
 	nMotorPIDSpeedCtrl[leftMotor] = mtrSpeedReg;
 	nMotorPIDSpeedCtrl[rightMotor] = mtrSpeedReg;
 	nPidUpdateInterval = PIDUpdateInterval;
-	turnRight(-18.43494882292202);
-	wait1Msec(500);
-	driveStraight(12.649110640673518);
-	wait1Msec(500);
-	turnRight(-38.38653951768523);
-	wait1Msec(500);
-	driveStraight(-31.064449134018133);
-	wait1Msec(500);
-	turnRight(-33.17851165939276);
-	wait1Msec(500);
-	driveStraight(-28.0);
-	wait1Msec(500);
-	turnRight(-40.15599962491933);
-	wait1Msec(500);
-	driveStraight(-20.93442141545832);
-	wait1Msec(500);
-	turnRight(-85.06159334327336);
-	wait1Msec(500);
-	driveStraight(10.404326023342406);
+turnRight(90.0);
+wait1Msec(100);
+driveStraight(8.0);
+wait1Msec(100);
+turnRight(53.13010235415598);
+wait1Msec(100);
+driveStraight(10.0);
+wait1Msec(100);
+turnRight(83.99099404250548);
+wait1Msec(100);
+driveStraight(-19.1049731745428);
+wait1Msec(100);
+turnRight(18.916414628760357);
+wait1Msec(100);
+driveStraight(-7.386643351347079);
+wait1Msec(100);
+turnRight(-20.15610702883966);
+wait1Msec(100);
+driveStraight(-11.491844934561204);
+wait1Msec(100);
+turnRight(-87.06732916229177);
+wait1Msec(100);
+driveStraight(-10.63014581273465);
 }
