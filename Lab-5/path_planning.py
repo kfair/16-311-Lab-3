@@ -2,11 +2,11 @@ import math
 
 # All measurements are in inches and degrees.
 
-START = (48, 12)
-START_HEADING = 90 # 0 is facing North in the map. Give heading in degrees.
-END = (84, 36)
-startW = 'w51'
-endW = 'w41'
+START = (24, 24)
+START_HEADING = -90 # 0 is facing North in the map. Give heading in degrees.
+END = (24, 42)
+startW = 'w14'
+endW = 'w11'
 
 
 blocks = [
@@ -32,7 +32,7 @@ waypoints = {
     'w33': (blocks[2][2]+WR, blocks[2][1]-WR),
     'w34': (blocks[2][0]-WR, blocks[2][1]-WR),
     # Block 4 waypoints
-    'w41': (91, 28),
+    'w41': (89, 28),
     'w42': (82.75, 20),
     # Block 5 waypoints
     'w51': (56, 12),
@@ -136,6 +136,7 @@ print('Commands:')
 # Move our heading such that East is 0 degrees.
 heading = normalize_turn(math.radians(START_HEADING))
 currentPos = START
+totalDistance = 0
 for key in path:
     x, y = waypoints[key]
     targetAngle = math.atan2(y - currentPos[1], x - currentPos[0])
@@ -143,6 +144,8 @@ for key in path:
     d = distance(currentPos, (x, y))
     currentPos = (x, y)
     heading = targetAngle
+    # d should still be positive at this point, but just in case.
+    totalDistance += abs(d)
     if (diffAngle > math.pi/2):
         diffAngle -= math.pi
         heading = normalize_turn(heading + math.pi)
@@ -152,17 +155,16 @@ for key in path:
         heading = normalize_turn(heading + math.pi)
         d = -d
     diffAngle = normalize_turn(diffAngle)
-
     print('turnRight(' + str(math.degrees(diffAngle)) + ');')
     print('wait1Msec(100);')
     print('driveStraight(' + str(d) + ');')
     print('wait1Msec(100);')
-    #print(heading*180/3.15)
 
 
 targetAngle = math.atan2(END[1] - currentPos[1], END[0] -currentPos[0])
 diffAngle = normalize_turn(heading - targetAngle)
 d = distance(currentPos, END)
+totalDistance += abs(d)
 if (diffAngle > math.pi/2):
     diffAngle -= math.pi
     heading += normalize_turn(math.pi)
@@ -176,6 +178,8 @@ diffAngle = normalize_turn(diffAngle)
 print('turnRight(' + str(math.degrees(diffAngle)) + ');')
 print('wait1Msec(100);')
 print('driveStraight(' + str(d) + ');')
-#print(heading*180/3.14)
+
 currentPos = (x, y)
 heading = targetAngle
+
+print('Total Distance:' + str(totalDistance))
