@@ -2,9 +2,12 @@ import math
 
 # All measurements are in inches and degrees.
 
-START = (12, 12)
-START_HEADING = 0 # 0 is facing North in the map. Give heading in degrees.
-END = (84, 12)
+START = (48, 12)
+START_HEADING = 90 # 0 is facing North in the map. Give heading in degrees.
+END = (84, 36)
+startW = 'w51'
+endW = 'w41'
+
 
 blocks = [
     (12, 36, 36, 38), # Block 1
@@ -29,15 +32,15 @@ waypoints = {
     'w33': (blocks[2][2]+WR, blocks[2][1]-WR),
     'w34': (blocks[2][0]-WR, blocks[2][1]-WR),
     # Block 4 waypoints
-    'w41': (88, 28),
-    'w42': (82.75, 24.5),
+    'w41': (91, 28),
+    'w42': (82.75, 20),
     # Block 5 waypoints
     'w51': (56, 12),
     'w52': (72, 30),
-    'w53': (78, 20.5),
-    'w54': (62, 7),
+    'w53': (76, 17),
+    'w54': (62, 4),
     # Block 6 waypoints
-    'w61': (10, 31),
+    'w61': (10, 32),
     'w62': (36, 16),
     'w63': (34, 7),
     'w64': (8, 24)
@@ -83,20 +86,20 @@ nodes = {
 def distance(a, b):
     return math.sqrt((a[0]-b[0])**2 +(a[1]-b[1])**2)
 
-startW = None
-endW = None
-minStart = 0
-minEnd = 0
-for w, coord in waypoints.items():
-    d = distance(START, coord)
-    if startW is None or d < minStart:
-        startW = w
-        minStart = d
-    d = distance(END, coord)
-    if endW is None or d < minEnd:
-        endW = w
-        minEnd = d
-assert(startW is not None and endW is not None)
+# startW = None
+# endW = None
+# minStart = 0
+# minEnd = 0
+# for w, coord in waypoints.items():
+#     d = distance(START, coord)
+#     if startW is None or d < minStart:
+#         startW = w
+#         minStart = d
+#     d = distance(END, coord)
+#     if endW is None or d < minEnd:
+#         endW = w
+#         minEnd = d
+# assert(startW is not None and endW is not None)
 
 nodes[startW] = ([startW], 0)
 # Do Dijkstra's
@@ -131,7 +134,7 @@ def normalize_turn(angle):
 
 print('Commands:')
 # Move our heading such that East is 0 degrees.
-heading = normalize_turn(math.radians(START_HEADING + 90))
+heading = normalize_turn(math.radians(START_HEADING))
 currentPos = START
 for key in path:
     x, y = waypoints[key]
@@ -142,17 +145,18 @@ for key in path:
     heading = targetAngle
     if (diffAngle > math.pi/2):
         diffAngle -= math.pi
-        heading += normalize_turn(math.pi)
+        heading = normalize_turn(heading + math.pi)
         d = -d
     if (diffAngle < -math.pi/2):
         diffAngle -= math.pi
-        heading += normalize_turn(math.pi)
+        heading = normalize_turn(heading + math.pi)
         d = -d
+    diffAngle = normalize_turn(diffAngle)
 
     print('turnRight(' + str(math.degrees(diffAngle)) + ');')
-    print('wait1Msec(500);')
+    print('wait1Msec(100);')
     print('driveStraight(' + str(d) + ');')
-    print('wait1Msec(500);')
+    print('wait1Msec(100);')
     #print(heading*180/3.15)
 
 
@@ -167,8 +171,10 @@ if (diffAngle < -math.pi/2):
     diffAngle -= math.pi
     heading += normalize_turn(math.pi)
     d = -d
+diffAngle = normalize_turn(diffAngle)
+
 print('turnRight(' + str(math.degrees(diffAngle)) + ');')
-print('wait1Msec(500);')
+print('wait1Msec(100);')
 print('driveStraight(' + str(d) + ');')
 #print(heading*180/3.14)
 currentPos = (x, y)
