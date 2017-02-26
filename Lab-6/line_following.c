@@ -23,7 +23,9 @@ float fudgeFactor = 0.25*tickAngle;
 // Sonar values
 int distance = 30;
 int sonar = SensorValue(ultrasonic);
-int prevSonar = 255;
+int prevSonar[4];
+int prevAvg = SensorValue(ultrasonic);
+int beepCounter = 0;
 
 // Localization values
 float prob = 0;
@@ -85,13 +87,38 @@ task main()
 
 		angle = position(nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
 		ticks = angle / tickAngle;
-		writeDebugStreamLine("Position = %f", ticks);
+		//writeDebugStreamLine("Position = %f", ticks);
+
 
 		sonar = SensorValue(ultrasonic);
-		if ((sonar < distance) && (prevSonar >= distance)) {
+		if ((sonar < distance) && (prevAvg >= distance)) {
+			writeDebugStreamLine("*******************");
+			writeDebugStreamLine("prevAvg = %f", prevAvg);
+			writeDebugStreamLine("prevAvg = %f", prevSonar[1]);
+			writeDebugStreamLine("prevAvg = %f", prevSonar[2]);
+			writeDebugStreamLine("prevAvg = %f", prevSonar[3]);
+			writeDebugStreamLine("Sonar = %f", sonar);
+		  writeDebugStreamLine("beepCounter = %f", beepCounter);
+			beepCounter += 1;
+			prevSonar[1] = sonar;
+			prevSonar[2] = sonar;
+			prevSonar[3] = sonar;
 			playTone(500, 25); while(bSoundActive);
 		}
-		prevSonar = sonar;
+
+
+		int sum = 0;
+
+		//update previous sonar values
+		for (int i = 0; i < 3; i++){
+			prevSonar[i] = prevSonar[i+1];
+			sum = sum + prevSonar[i];
+		}
+		sum = sum + sonar;
+		sum = sum - prevSonar[0];
+		prevSonar[3] = sonar;
+
+		prevAvg = sum/3;
 
 		wait1Msec(waitTime);
 	}
