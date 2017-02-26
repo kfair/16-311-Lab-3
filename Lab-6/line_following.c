@@ -16,8 +16,7 @@ float axleLen = 4.875;
 float wheelDist = axleLen / 2;
 float wheelR = 1.032;			// Decrease to go farther
 float r = 12;
-float tickAngle = 360 / 16;
-float ticks = 0;
+float tickAngle = 360 / 16.0;
 float fudgeFactor = 0.25*tickAngle;
 
 // Sonar values
@@ -26,7 +25,10 @@ int sonar = SensorValue(ultrasonic);
 int prevSonar = 255;
 
 // Localization values
-float prob = 0;
+int numTicks = 16;
+float probs[16];
+float probsCopy[16];
+int map[16];
 
 // Line following functions
 task straight()
@@ -62,12 +64,74 @@ float position(int leftDegrees, int rightDegrees)
 	return angle;
 }
 
+float position2(int rightDegrees) {
+	return rightDegrees / 877.0 * 90.0;
+}
+
+void updateProbabilities(int ticks) {
+	for (int i = 0; i < numTicks; i++) {
+		probs[i] = probs[i] * 0.5;
+	}
+	for (int i = 0; i < numTicks; i++) {
+		if (map[i] == 1) {
+			int i2 = (i + ticks) % 16;
+			//Update the probability map
+			probs[i2] += 1;
+		}
+	}
+
+}
+
+float getMaxProb() {
+	//Normalize
+	float sum = 0;
+	float maxVal = 0;
+	for (int i = 0; i < numTicks; i++) {
+		sum += probs[i];
+		if (probs[i] > maxVal) {
+			maxVal = probs[i];
+		}
+	}
+	return maxVal / sum;
+}
+
+void blurProbabilities() {
+	float filter[3];
+	//Convolution filter for blurring the probabilities.
+	filter[0] = 0.1;
+	filter[1] = 0.8;
+	filter[2] = 0.1;
+	for (int i = 0; i < numTicks; i++) {
+		probsCopy[i] = probs[i];
+	}
+	for (int i = 0; i < numTicks; i++) {
+		probs[i] = 0;
+		for (int j = 0; j < 3; j++) {
+			int pIndex = i + j - 1;
+			if (pIndex < 0) {
+				pIndex += numTicks;
+			}
+			probs[i] += filter[j] * probsCopy[pIndex];
+		}
+	}
+}
+
 task main()
 {
-	nMotorEncoder[leftMotor] = 0;
-	nMotorEncoder[rightMotor] = 0;
+	map[0] = 1; map[1] = 1; map[2] = 1; map[3] = 1;
+	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 0;
+	map[8] = 0; map[9] = 0; map[10] = 0; map[11] = 0;
+	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 0;
+
 	float angle = 0;
-	while (prob < 0.9)
+	int ticks = 0;
+	bool foundFirstWall = false;
+
+	for (int i = 0; i < numTicks; i++) {
+		probs[i] = 1.0/numTicks;
+	}
+
+	while (true)
 	{
 		int light = SensorValue(lightSensor);
 		if (light < black)
@@ -82,17 +146,32 @@ task main()
 		{
 			startTask(straight);
 		}
-
-		angle = position(nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
-		ticks = angle / tickAngle;
-		writeDebugStreamLine("Position = %f", ticks);
-
 		sonar = SensorValue(ultrasonic);
 		if ((sonar < distance) && (prevSonar >= distance)) {
-			playTone(500, 25); while(bSoundActive);
+			//playTone(500, 25); while(bSoundActive);
+			if (!foundFirstWall) {
+				//Only start counting ticks from our first wall.
+				nMotorEncoder[leftMotor] = 0;
+				nMotorEncoder[rightMotor] = 0;
+			}
+			updateProbabilities(ticks);
+			writeDebugStreamLine("%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
+			foundFirstWall = true;
 		}
 		prevSonar = sonar;
+		if (foundFirstWall) {
+			//Blur the probabilities a little bit because of encoder error.
+			angle += position2(nMotorEncoder[rightMotor]);
+			nMotorEncoder[leftMotor] = 0;
+			nMotorEncoder[rightMotor] = 0;
+			int prevTicks = ticks;
 
+			ticks = (int)(angle / tickAngle);
+			//If we moved ticks, blur the probabilities.
+			if (ticks != prevTicks) {
+			}
+		}
+		//writeDebugStreamLine("Position = %f", angle);
 		wait1Msec(waitTime);
 	}
 }
