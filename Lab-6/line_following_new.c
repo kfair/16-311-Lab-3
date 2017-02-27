@@ -12,24 +12,15 @@ int speed = 35;
 float curve = 6.5;
 
 // Dead recknoning values
-float axleLen = 4.875;
-float wheelDist = axleLen / 2;
-float wheelR = 1.032;			// Decrease to go farther
-float r = 12;
 float tickAngle = 360 / 16.0;
-float fudgeFactor = 0.25*tickAngle;
 
 // Sonar values
 int distance = 30;
 int sonar = SensorValue(ultrasonic);
 int prevSonar[4];
 int prevAvg = SensorValue(ultrasonic);
-int beepCounter = 0;
 
 // Localization values
-int numTicks = 16;
-float probs[16];
-float probsCopy[16];
 int map[16];
 float whereWeAre[16];
 
@@ -50,24 +41,7 @@ task right()
 		motor[rightMotor] = speed - 2*curve;
 }
 
-// Dead reckoning
-float position(int leftDegrees, int rightDegrees)
-{
-	float leftRads = leftDegrees*PI/180;
-	float leftDist = wheelR*leftRads;
-	float leftAngle = leftDist/(r+wheelDist);
-	leftAngle *= 180/PI;
-
-	float rightRads = rightDegrees*PI/180;
-	float rightDist = wheelR*rightRads;
-	float rightAngle = rightDist/(r-wheelDist);
-	rightAngle *= 180/PI;
-
-	float angle = (leftAngle+rightAngle)/2 - fudgeFactor;
-
-	return angle;
-}
-
+//Dead Reckoning
 float position2(int rightDegrees) {
 	return rightDegrees / 800.0 * 90.0;
 }
@@ -78,49 +52,11 @@ void updateProbabilities(int ticks) {
 	}
 }
 
-float getMaxProb() {
-	//Normalize
-	float sum = 0;
-	float maxVal = 0;
-	for (int i = 0; i < numTicks; i++) {
-		sum += probs[i];
-		if (probs[i] > maxVal) {
-			maxVal = probs[i];
-		}
-	}
-	return maxVal / sum;
-}
-
-void blurProbabilities() {
-	float filter[3];
-	//Convolution filter for blurring the probabilities.
-	filter[0] = 0.1;
-	filter[1] = 0.8;
-	filter[2] = 0.1;
-	for (int i = 0; i < numTicks; i++) {
-		probsCopy[i] = probs[i];
-	}
-	for (int i = 0; i < numTicks; i++) {
-		probs[i] = 0;
-		for (int j = 0; j < 3; j++) {
-			int pIndex = i + j - 1;
-			if (pIndex < 0) {
-				pIndex += numTicks;
-			}
-			if(pIndex > 15){
-				pIndex -= 16;
-			}
-			probs[i] += filter[j] * probsCopy[pIndex];
-		}
-	}
-}
-
 bool seenLastOne(int ticks, int wallsSeen){
 	int sum = 0;
 	for (int i = 0; i < 16; i++){
 		sum += map[i];
 	}
-
 	return(sum == wallsSeen);
 }
 
@@ -131,24 +67,17 @@ task main()
 	map[8] = 1; map[9] = 0; map[10] = 0; map[11] = 0;
 	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 1;
 
-	whereWeAre[0] = 0; whereWeAre[1] = 0; whereWeAre[2] = 0; whereWeAre[3] = 0;
-	whereWeAre[4] = 0; whereWeAre[5] = 0; whereWeAre[6] = 0; whereWeAre[7] = 0;
-	whereWeAre[8] = 0; whereWeAre[9] = 0; whereWeAre[10] = 0; whereWeAre[11] = 0;
-	whereWeAre[12] = 0; whereWeAre[13] = 0; whereWeAre[14] = 0; whereWeAre[15] = 0;
-
 	float angle = 0;
 	float ticks = 0;
 	bool foundFirstWall = false;
 
 	int wallsSeen = 0;
 
-	for (int i = 0; i < numTicks; i++) {
-		probs[i] = 1.0;
-	}
 	nMotorEncoder[leftMotor] = 0;
 	nMotorEncoder[rightMotor] = 0;
 	while (!seenLastOne(ticks, wallsSeen))
 	{
+		//Line following
 		int light = SensorValue(lightSensor);
 		if (light < black)
 		{
@@ -163,22 +92,15 @@ task main()
 			startTask(straight);
 		}
 
-
-		//angle = position(nMotorEncoder[leftMotor], nMotorEncoder[rightMotor]);
-		//ticks = angle / tickAngle;
-		//writeDebugStreamLine("Position = %f", ticks);
-
-
 		sonar = SensorValue(ultrasonic);
-		//Blur the probabilities a little bit because of encoder error.
-		angle = position2(nMotorEncoder[rightMotor]);
-		int prevTicks = round(ticks);
 
+		angle = position2(nMotorEncoder[rightMotor]);
+
+		int prevTicks = round(ticks);
 		ticks = ((angle / tickAngle));
 
 		if ((sonar < distance) && (prevAvg >= distance)) {
 
-			beepCounter += 1;
 			prevSonar[1] = sonar;
 			prevSonar[2] = sonar;
 			prevSonar[3] = sonar;
@@ -195,34 +117,26 @@ task main()
 				ticks = 0;
 			}
 			else{
-			updateProbabilities(round(ticks));
-		}
-			writeDebugStreamLine("Ticks %f", ticks);
-			for(int i = 0; i <16; i++){
-					probs[i] = whereWeAre[i];
-		  }
-			writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
+				updateProbabilities(round(ticks));
+			}
 			foundFirstWall = true;
+			writeDebugStreamLine("Ticks %f", ticks);
+			writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", whereWeAre[0], whereWeAre[1], whereWeAre[2], whereWeAre[3], whereWeAre[4], whereWeAre[5], whereWeAre[6], whereWeAre[7], whereWeAre[8], whereWeAre[9], whereWeAre[10], whereWeAre[11], whereWeAre[12], whereWeAre[13], whereWeAre[14], whereWeAre[15]);
 		}
 		prevSonar = sonar;
-		if (foundFirstWall) {
-			if(prevTicks != round(ticks)){
+		if (foundFirstWall && prevTicks != round(ticks)) {
 			float save = whereWeAre[15];
 			for(int i = 15; i >= 1; i--){
 				whereWeAre[i] = whereWeAre[i-1];
 			}
 			whereWeAre[0] = save;
-			for(int i = 0; i <16; i++){
-				probs[i] = whereWeAre[i];
-			}
-			writeDebugStreamLine("Shifting!!!");
-			writeDebugStreamLine("Ticks: %d", round(ticks));
-			writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
-		}
+
+			//writeDebugStreamLine("Shifting!!!");
+			//writeDebugStreamLine("Ticks: %d", round(ticks));
+			//writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", whereWeAre[0], whereWeAre[1], whereWeAre[2], whereWeAre[3], whereWeAre[4], whereWeAre[5], whereWeAre[6], whereWeAre[7], whereWeAre[8], whereWeAre[9], whereWeAre[10], whereWeAre[11], whereWeAre[12], whereWeAre[13], whereWeAre[14], whereWeAre[15]);
 		}
 
 		int sum = 0;
-
 		//update previous sonar values
 		for (int i = 0; i < 3; i++){
 			prevSonar[i] = prevSonar[i+1];
@@ -234,9 +148,7 @@ task main()
 
 		prevAvg = sum/3;
 
-		//writeDebugStreamLine("Position = %f", angle);
-		//writeDebugStreamLine("Right = %d, %f", nMotorEncoder[rightMotor], nMotorEncoder[rightMotor] / 900.0 * 90.0);
 		wait1Msec(waitTime);
 	}
-	writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
+	writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", whereWeAre[0], whereWeAre[1], whereWeAre[2], whereWeAre[3], whereWeAre[4], whereWeAre[5], whereWeAre[6], whereWeAre[7], whereWeAre[8], whereWeAre[9], whereWeAre[10], whereWeAre[11], whereWeAre[12], whereWeAre[13], whereWeAre[14], whereWeAre[15]);
 }
