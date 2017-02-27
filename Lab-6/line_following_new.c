@@ -31,6 +31,7 @@ int numTicks = 16;
 float probs[16];
 float probsCopy[16];
 int map[16];
+float whereWeAre[16];
 
 // Line following functions
 task straight()
@@ -72,27 +73,9 @@ float position2(int rightDegrees) {
 }
 
 void updateProbabilities(int ticks) {
-	for (int i = 0; i < numTicks; i++) {
-		probs[i] = probs[i] * 0.5;
+	for (int i = 0; i < 16; i++) {
+		whereWeAre[i] = whereWeAre[i] * (map[i] + .5);
 	}
-	for (int i = 0; i < numTicks; i++) {
-		if (map[i] == 1) {
-			int i2 = (i + ticks) % 16;
-			//Update the probability map
-			probs[i2] *= 2;
-			//if(i2<1){
-			//	probs[15] *= 1.5;
-			//}
-			//else
-			//	probs[i2-1] *= 1.5;
-			//if(i2 == 15){
-			//	probs[0] *= 1.5;
-			//}
-			//else
-			//	probs[i2+1] *= 1.5;
-		}
-	}
-
 }
 
 float getMaxProb() {
@@ -143,10 +126,15 @@ bool seenLastOne(int ticks, int wallsSeen){
 
 task main()
 {
-	map[0] = 1; map[1] = 0; map[2] = 0; map[3] = 1;
-	map[4] = 0; map[5] = 0; map[6] = 1; map[7] = 1;
-	map[8] = 0; map[9] = 0; map[10] = 0; map[11] = 0;
-	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 0;
+	map[0] = 0; map[1] = 0; map[2] = 1; map[3] = 1;
+	map[4] = 0; map[5] = 1; map[6] = 0; map[7] = 1;
+	map[8] = 1; map[9] = 0; map[10] = 0; map[11] = 0;
+	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 1;
+
+	whereWeAre[0] = 0; whereWeAre[1] = 0; whereWeAre[2] = 0; whereWeAre[3] = 0;
+	whereWeAre[4] = 0; whereWeAre[5] = 0; whereWeAre[6] = 0; whereWeAre[7] = 0;
+	whereWeAre[8] = 0; whereWeAre[9] = 0; whereWeAre[10] = 0; whereWeAre[11] = 0;
+	whereWeAre[12] = 0; whereWeAre[13] = 0; whereWeAre[14] = 0; whereWeAre[15] = 0;
 
 	float angle = 0;
 	float ticks = 0;
@@ -184,9 +172,10 @@ task main()
 		sonar = SensorValue(ultrasonic);
 		//Blur the probabilities a little bit because of encoder error.
 		angle = position2(nMotorEncoder[rightMotor]);
-		int prevTicks = ticks;
+		int prevTicks = round(ticks);
 
 		ticks = ((angle / tickAngle));
+
 		if ((sonar < distance) && (prevAvg >= distance)) {
 
 			beepCounter += 1;
@@ -200,18 +189,36 @@ task main()
 				//Only start counting ticks from our first wall.
 				nMotorEncoder[leftMotor] = 0;
 				nMotorEncoder[rightMotor] = 0;
+				for(int i = 0; i <16; i++){
+					whereWeAre[i] = map[i];
+				}
 				ticks = 0;
 			}
+			else{
 			updateProbabilities(round(ticks));
+		}
 			writeDebugStreamLine("Ticks %f", ticks);
+			for(int i = 0; i <16; i++){
+					probs[i] = whereWeAre[i];
+		  }
 			writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
 			foundFirstWall = true;
 		}
 		prevSonar = sonar;
 		if (foundFirstWall) {
-			if(round(prevTicks) != round(ticks)){
-				//blurProbabilities();
+			if(prevTicks != round(ticks)){
+			float save = whereWeAre[15];
+			for(int i = 15; i >= 1; i--){
+				whereWeAre[i] = whereWeAre[i-1];
 			}
+			whereWeAre[0] = save;
+			for(int i = 0; i <16; i++){
+				probs[i] = whereWeAre[i];
+			}
+			writeDebugStreamLine("Shifting!!!");
+			writeDebugStreamLine("Ticks: %d", round(ticks));
+			writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", probs[0], probs[1], probs[2], probs[3], probs[4], probs[5], probs[6], probs[7], probs[8], probs[9], probs[10], probs[11], probs[12], probs[13], probs[14], probs[15]);
+		}
 		}
 
 		int sum = 0;
