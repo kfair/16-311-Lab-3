@@ -17,7 +17,7 @@ float tickAngle = 360 / 16.0;
 // Sonar values
 int distance = 30;
 int sonar = SensorValue(ultrasonic);
-int prevSonar[4];
+int prevSonar[5];
 int prevAvg = SensorValue(ultrasonic);
 
 // Localization values
@@ -50,6 +50,21 @@ float position2(int rightDegrees) {
 void updateProbabilities() {
 	for (int i = 0; i < 16; i++) {
 		whereWeAre[i] = whereWeAre[i] * (map[i] + .5);
+		if(map[i] == 1){
+			if(i == 0){
+				whereWeAre[15] = whereWeAre[15] * 1.25;
+			}
+			else {
+				whereWeAre[i-1] = whereWeAre[i-1]*1.25;
+	  	}
+	  	if(i == 15){
+	  		whereWeAre[0] = whereWeAre[0] *1.25;
+	  	}
+	  	else{
+	  		whereWeAre[i+1] = whereWeAre[i+1] * 1.25;
+	  	}
+	  }
+
 		writeDebugStream("%f ", map[i] + .5);
 	}
 	writeDebugStreamLine("");
@@ -87,13 +102,29 @@ bool seenLastOne(int ticks, int wallsSeen){
 	return(sum == wallsSeen);
 }
 
+bool determineLocation(){
+	float maxProb = 0;
+	for(int i = 0; i<16; i++){
+		if(whereWeAre[i] > maxProb){
+			maxProb = whereWeAre[i];
+		}
+	}
+	int count = 0;
+	for(int i = 0; i <16; i++){
+		if(whereWeAre[i] == maxProb){
+			count++;
+		}
+	}
+	return (count == 1)
+}
+
 task main()
 {
-	int goal = 2;
-	map[0] = 0; map[1] = 0; map[2] = 1; map[3] = 0;
-	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 1;
-	map[8] = 1; map[9] = 0; map[10] = 0; map[11] = 0;
-	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 1;
+	int goal = 0;
+	map[0] = 1; map[1] = 1; map[2] = 1; map[3] = 0;
+	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 0;
+	map[8] = 0; map[9] = 0; map[10] = 0; map[11] = 0;
+	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 0;
 
 	float angle = 0;
 	float ticks = 0;
@@ -103,7 +134,27 @@ task main()
 
 	nMotorEncoder[leftMotor] = 0;
 	nMotorEncoder[rightMotor] = 0;
-	while (!seenLastOne(ticks, wallsSeen))
+
+	int valTime1 = time1[T1];
+
+	while (time1[T1] < valTime1 + 3000){
+		//Line following
+		int light = SensorValue(lightSensor);
+		if (light < black)
+		{
+			startTask(left);
+		}
+		else if (light > white)
+		{
+			startTask(right);
+		}
+		else
+		{
+			startTask(straight);
+		}
+	}
+
+	while ((!seenLastOne(ticks, wallsSeen)||!determineLocation()) && valTime1 + 60000 > time1[T1])
 	{
 		//Line following
 		int light = SensorValue(lightSensor);
@@ -129,12 +180,18 @@ task main()
 
 		if ((sonar < distance) && (prevAvg >= distance)) {
 
+			writeDebugStreamLine("PrevSonar: %f, %f, %f, %f, %f", prevSonar[0], prevSonar[1], prevSonar[2], prevSonar[3], prevSonar[4]);
+			writeDebugStreamLine("CurrentSonar: %f", sonar);
+
+		  prevSonar[0] = sonar;
 			prevSonar[1] = sonar;
 			prevSonar[2] = sonar;
 			prevSonar[3] = sonar;
+			prevSonar[4] = sonar
 			wallsSeen += 1;
 			writeDebugStreamLine("Ticks %f", ticks);
-			//playTone(500, 25); while(bSoundActive);
+			writeDebugStreamLine("Walls Seen %f", wallsSeen);
+			playTone(500, 25); while(bSoundActive);
 			if (!foundFirstWall) {
 				//Only start counting ticks from our first wall.
 				nMotorEncoder[leftMotor] = 0;
@@ -149,7 +206,6 @@ task main()
 				writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", whereWeAre[0], whereWeAre[1], whereWeAre[2], whereWeAre[3], whereWeAre[4], whereWeAre[5], whereWeAre[6], whereWeAre[7], whereWeAre[8], whereWeAre[9], whereWeAre[10], whereWeAre[11], whereWeAre[12], whereWeAre[13], whereWeAre[14], whereWeAre[15]);
 				updateProbabilities();
 				writeDebugStreamLine("%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", whereWeAre[0], whereWeAre[1], whereWeAre[2], whereWeAre[3], whereWeAre[4], whereWeAre[5], whereWeAre[6], whereWeAre[7], whereWeAre[8], whereWeAre[9], whereWeAre[10], whereWeAre[11], whereWeAre[12], whereWeAre[13], whereWeAre[14], whereWeAre[15]);
-
 			}
 			foundFirstWall = true;
 
@@ -169,15 +225,15 @@ task main()
 
 		int sum = 0;
 		//update previous sonar values
-		for (int i = 0; i < 3; i++){
+		for (int i = 0; i < 4; i++){
 			prevSonar[i] = prevSonar[i+1];
 			sum = sum + prevSonar[i];
 		}
 		sum = sum + sonar;
-		sum = sum - prevSonar[0];
-		prevSonar[3] = sonar;
+		//sum = sum - prevSonar[0];
+		prevSonar[4] = sonar;
 
-		prevAvg = sum/3;
+		prevAvg = sum/5;
 
 		wait1Msec(waitTime);
 	}
@@ -190,7 +246,7 @@ task main()
 		}
 	}
 	ticks = 0;
-	float distance = (goal - whereWeThinkWeAre) % 16 + 0.85;
+	float distance = (goal - whereWeThinkWeAre) % 16 + 0.9;
 	if (distance < 0) {
 		distance += 16;
 	}
