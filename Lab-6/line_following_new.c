@@ -99,7 +99,7 @@ bool seenLastOne(int ticks, int wallsSeen){
 	for (int i = 0; i < 16; i++){
 		sum += map[i];
 	}
-	return(sum == wallsSeen);
+	return(sum <= wallsSeen);
 }
 
 bool determineLocation(){
@@ -111,19 +111,19 @@ bool determineLocation(){
 	}
 	int count = 0;
 	for(int i = 0; i <16; i++){
-		if(whereWeAre[i] == maxProb){
+		if(abs(whereWeAre[i] - maxProb) < .01){
 			count++;
 		}
 	}
-	return (count == 1)
+	return (count == 1 && maxProb >= 1)
 }
 
 task main()
 {
 	int goal = 0;
-	map[0] = 1; map[1] = 1; map[2] = 1; map[3] = 0;
+	map[0] = 0; map[1] = 1; map[2] = 0; map[3] = 0;
 	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 0;
-	map[8] = 0; map[9] = 0; map[10] = 0; map[11] = 0;
+	map[8] = 1; map[9] = 1; map[10] = 0; map[11] = 0;
 	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 0;
 
 	float angle = 0;
@@ -142,7 +142,8 @@ task main()
 		int light = SensorValue(lightSensor);
 		if (light < black)
 		{
-			startTask(left);
+			motor[leftMotor] = 10 - 2*curve;
+			motor[rightMotor] = 10 + 2* curve;
 		}
 		else if (light > white)
 		{
@@ -230,10 +231,10 @@ task main()
 			sum = sum + prevSonar[i];
 		}
 		sum = sum + sonar;
-		//sum = sum - prevSonar[0];
+		sum = sum - prevSonar[0];
 		prevSonar[4] = sonar;
 
-		prevAvg = sum/5;
+		prevAvg = sum/4;
 
 		wait1Msec(waitTime);
 	}
@@ -246,7 +247,7 @@ task main()
 		}
 	}
 	ticks = 0;
-	float distance = (goal - whereWeThinkWeAre) % 16 + 0.9;
+	float distance = (goal - whereWeThinkWeAre) % 16 + 0.3;
 	if (distance < 0) {
 		distance += 16;
 	}
