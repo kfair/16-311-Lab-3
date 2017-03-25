@@ -120,10 +120,10 @@ bool determineLocation(){
 
 task main()
 {
-	int goal = 0;
-	map[0] = 0; map[1] = 1; map[2] = 0; map[3] = 0;
-	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 0;
-	map[8] = 1; map[9] = 1; map[10] = 0; map[11] = 0;
+	int goal = 11;
+	map[0] = 1; map[1] = 0; map[2] = 0; map[3] = 0;
+	map[4] = 0; map[5] = 0; map[6] = 0; map[7] = 1;
+	map[8] = 0; map[9] = 0; map[10] = 0; map[11] = 0;
 	map[12] = 0; map[13] = 0; map[14] = 0; map[15] = 0;
 
 	float angle = 0;
