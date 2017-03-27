@@ -21,11 +21,11 @@ task main()
 			motor[rightMotor] = right * 0.5;
 		}
 		else motor[rightMotor] = 0;
-		if(joystick.joy1_Buttons == 1) {
-			motor[armMotor] = -127;
+		if(joystick.joy1_TopHat == 0) {
+			motor[armMotor] = 20;
 		}
-		else if(joystick.joy1_Buttons == 4) {
-			motor[armMotor] = 10;
+		else if(joystick.joy1_TopHat == 4) {
+			motor[armMotor] = -50;
 		}
 		else {
 			motor[armMotor] = 0;
