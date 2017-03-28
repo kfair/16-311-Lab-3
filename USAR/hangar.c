@@ -11,8 +11,8 @@ task main()
 	// Motors are reversed to drive backwards.
 	while(true) {
 		if (time1[T1] > 15000) {
-			motor[leftMotor] = -50;
-			motor[rightMotor] = -50;
+			motor[leftMotor] = -25;
+			motor[rightMotor] = -60; //50
 			wait1Msec(2000);
 			clearTimer(T1);
 		}
@@ -33,7 +33,7 @@ task main()
 				motor[leftMotor] = -30;
 				motor[rightMotor] = 30;
 			}
-			wait1Msec(900);
+			wait1Msec(1050);
 		}
 		else {
 			motor[leftMotor] = 20;
