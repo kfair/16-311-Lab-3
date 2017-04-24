@@ -6,8 +6,8 @@ l1 = 3.75
 l2 = 2.5
 
 start = (0, 0) #(t1, t2) degrees
-A = (2.1, 5.6) #(x, y) inches
-B = (0, 5.4) #(x, y) inches
+A = (3.75, 2.5) #(x, y) inches
+B = (-3.75, 2.5) #(x, y) inches
 
 obstacle = [LineString([(-2, 8), (2, 8)]),
             LineString([(2, 8), (2, 5.5)]),
@@ -82,7 +82,6 @@ def pick_better_config(points, start):
             return (t11, t21)
         else:
             return (t12, t22)
-
 (At1, At2) = pick_better_config(inv_kinematics(A), start)
 (Bt1, Bt2) = pick_better_config(inv_kinematics(B), (At1, At2))
 (Ct1, Ct2) = pick_better_config(inv_kinematics(A), (Bt1, Bt2))
@@ -175,9 +174,32 @@ def wavefront(startAngles, endAngles):
     positions.append((i_to_t1(et1i), i_to_t2(et2i)))
     if not endOnGrid:
         positions.append(endAngles)
-    print(positions)
     return positions
 
-wavefront(start, (At1, At2))
-wavefront((At1, At2), (Bt1, Bt2))
-wavefront((Bt1, Bt2), (Ct1, Ct2))
+moves1 = wavefront(start, (At1, At2))
+moves2 = wavefront((At1, At2), (Bt1, Bt2))
+moves3 = wavefront((Bt1, Bt2), (Ct1, Ct2))
+for a, b in moves1:
+    if abs(a) < 0.01:
+        a = 0
+    if abs(b) < 0.01:
+        b = 0
+    print("move(" + str(a) + ", " + str(b) + ");")
+print("wait1Msec(3000);")
+print("// At point A")
+for a, b in moves2:
+    if abs(a) < 0.01:
+        a = 0
+    if abs(b) < 0.01:
+        b = 0
+    print("move(" + str(a) + ", " + str(b) + ");")
+print("wait1Msec(3000);")
+print("// At point B")
+for a, b in moves3:
+    if abs(a) < 0.01:
+        a = 0
+    if abs(b) < 0.01:
+        b = 0
+    print("move(" + str(a) + ", " + str(b) + ");")
+print("wait1Msec(3000);")
+print("// At point A")
