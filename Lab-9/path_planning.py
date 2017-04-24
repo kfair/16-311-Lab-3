@@ -6,8 +6,8 @@ l1 = 3.75
 l2 = 2.5
 
 start = (0, 0) #(t1, t2) degrees
-A = (3.75, 2.75) #(x, y) inches
-B = (-2.75, 3.75) #(x, y) inches
+A = (2.1, 5.6) #(x, y) inches
+B = (0, 5.4) #(x, y) inches
 
 obstacle = [LineString([(-2, 8), (2, 8)]),
             LineString([(2, 8), (2, 5.5)]),
@@ -20,24 +20,23 @@ obstacle = [LineString([(-2, 8), (2, 8)]),
             LineString([(-7.1, -0.1), (-7.1, 8.1)])
             ]
 
-t1range, t2range = 18, 36;
+t1range, t2range = 180, 360;
 cspace = [[0 for y in range(0, t2range)] for x in range(0, t1range)] 
 
 def t1_to_i(t):
-    return int(t // 10)
+    return round(t)
 
 def t2_to_i(t):
-    return int((t + 180) // 10)
+    return round(t + 180)
 
 def i_to_t1(i):
-    return i*10
+    return i
 
 def i_to_t2(i):
-    return i*10 - 180
+    return i - 180
 
-for t1 in range(0, 180, 10):
-    #for t2 in range(-180, 180, 10):
-    for t2 in range(-180, 180, 10):
+for t1 in range(0, 180):
+    for t2 in range(-180, 180):
         t1r = math.radians(t1)
         t2r = math.radians(t2)
         x2 = l1 * math.cos(t1r) + l2 * math.cos(t1r + t2r)
@@ -88,16 +87,12 @@ def pick_better_config(points, start):
 (Bt1, Bt2) = pick_better_config(inv_kinematics(B), (At1, At2))
 (Ct1, Ct2) = pick_better_config(inv_kinematics(A), (Bt1, Bt2))
 
-# Round to the nearest 10 degrees.
-At1 = round(math.degrees(At1) / 10) * 10
-At2 = round(math.degrees(At2) / 10) * 10
-Bt1 = round(math.degrees(Bt1) / 10) * 10
-Bt2 = round(math.degrees(Bt2) / 10) * 10
-Ct1 = round(math.degrees(Ct1) / 10) * 10
-Ct2 = round(math.degrees(Ct2) / 10) * 10
-print (At1, At2)
-print (Bt1, Bt2)
-print (Ct1, Ct2)
+At1 = math.degrees(At1)
+At2 = math.degrees(At2)
+Bt1 = math.degrees(Bt1)
+Bt2 = math.degrees(Bt2)
+Ct1 = math.degrees(Ct1)
+Ct2 = math.degrees(Ct2)
 
 def wavefront(startAngles, endAngles):
     (st1, st2) = startAngles
@@ -105,10 +100,12 @@ def wavefront(startAngles, endAngles):
     # Get the starting indices
     st1i = t1_to_i(st1)
     st2i = t2_to_i(st2)
+    startOnGrid = i_to_t1(st1i) == st1 and i_to_t2(st2i) == st2
     et1i = t1_to_i(et1)
     et2i = t2_to_i(et2)
+    endOnGrid = i_to_t1(et1i) == et1 and i_to_t2(et2i) == et2
     # Make a copy of the space.
-    cspace2 = copy.copy(cspace)
+    cspace2 = copy.deepcopy(cspace)
     cspace2[et1i][et2i] = 2
     while cspace2[st1i][st2i] == 0:
         for t1 in range(0, len(cspace2)):
@@ -128,6 +125,8 @@ def wavefront(startAngles, endAngles):
     direction = None
     (t1, t2) = (st1i, st2i)
     positions = [startAngles]
+    if not startOnGrid:
+        positions.append((i_to_t1(st1i), i_to_t2(st2i)))
     v = cspace2[t1][t2];
     while v > 2:
         v = v-1
@@ -138,22 +137,22 @@ def wavefront(startAngles, endAngles):
             # Change directions.
             if t1+1<t1range and cspace2[t1+1][t2] == v:
                 if direction is not None:
-                    positions.append((i_to_t1(t1+1), i_to_t2(2)))
+                    positions.append((i_to_t1(t1), i_to_t2(t2)))
                 direction = 't1+1'
                 t1 = t1+1
             elif t1-1>=0 and cspace2[t1-1][t2] == v:
                 if direction is not None:
-                    positions.append((i_to_t1(t1-1), i_to_t2(t2)))
+                    positions.append((i_to_t1(t1), i_to_t2(t2)))
                 direction = 't1-1'
                 t1 = t1-1
             elif t2+1<t2range and cspace2[t1][t2+1] == v:
                 if direction is not None:
-                    positions.append((i_to_t1(t1), i_to_t2(t2+1)))
+                    positions.append((i_to_t1(t1), i_to_t2(t2)))
                 direction = 't2+1'
                 t2 = t2+1
             elif t2-1>=0 and cspace2[t1][t2-1] == v:
                 if direction is not None:
-                    positions.append((i_to_t1(t1), i_to_t2(t2-1)))
+                    positions.append((i_to_t1(t1), i_to_t2(t2)))
                 direction = 't2-1'
                 t2 = t2-1
             else:
@@ -173,9 +172,12 @@ def wavefront(startAngles, endAngles):
                 print("Error going in same direction")
                 print(direction)
                 break
-    positions.append(endAngles)
+    positions.append((i_to_t1(et1i), i_to_t2(et2i)))
+    if not endOnGrid:
+        positions.append(endAngles)
     print(positions)
     return positions
+
 wavefront(start, (At1, At2))
 wavefront((At1, At2), (Bt1, Bt2))
 wavefront((Bt1, Bt2), (Ct1, Ct2))
