@@ -28,6 +28,8 @@ task main()
 	nMotorEncoder[motorA] = 0;
 	nMotorEncoder[motorB] = 0;
 
+
+	//Add generated code here:
 move(0, 0);
 move(0, 90);
 move(0, 90.0);
@@ -45,5 +47,8 @@ move(0, 90);
 move(0, 90.0);
 wait1Msec(3000);
 // At point A
-move(0,0);
+
+
+	//Leave this:
+	move(0,0);
 }
