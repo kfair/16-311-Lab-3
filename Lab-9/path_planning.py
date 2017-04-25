@@ -9,10 +9,10 @@ start = (0, 0) #(t1, t2) degrees
 A = (3.75, 2.5) #(x, y) inches
 B = (-3.75, 2.5) #(x, y) inches
 
-obstacle = [LineString([(-2, 8), (2, 8)]),
-            LineString([(2, 8), (2, 5.5)]),
-            LineString([(2, 5.5), (-2, 5.5)]),
-            LineString([(-2, 5.5), (-2, 8)]),
+obstacle = [LineString([(-2.5, 8.5), (2.5, 8.5)]),
+            LineString([(2.5, 8.5), (2.5, 5)]),
+            LineString([(2.5, 5), (-2.5, 5)]),
+            LineString([(-2.5, 5), (-2.5, 8.5)]),
             # Workspace boundaries:
             LineString([(-7.1, 8.1), (7.1, 8.1)]),
             LineString([(7.1, 8.1), (7.1, -0.1)]),
@@ -56,7 +56,7 @@ for t1 in range(0, 180):
 def inv_kinematics(p):
     t21 = math.acos((p[0] * p[0] + p[1] * p[1] - l1 * l1 - l2 * l2) \
             /(2 * l1 * l2))
-    t22 = math.pi - t21
+    t22 = -t21
     t11 = math.atan2(p[1], p[0]) \
             - math.asin(l2 * math.sin(t21)/math.sqrt(p[0]*p[0] + p[1] * p[1]))
     t12 = math.atan2(p[1], p[0]) \
@@ -68,8 +68,8 @@ def inv_kinematics(p):
 def pick_better_config(points, start):
     [(t11, t21), (t12, t22)] = points
     (st1, st2) = start
-    firstValid = cspace[t1_to_i(t11)][t2_to_i(t21)] == 1
-    secondValid = cspace[t1_to_i(t12)][t2_to_i(t22)] == 1
+    firstValid = 0 <= t11 and t11 < 180 and cspace[t1_to_i(t11)][t2_to_i(t21)] == 1
+    secondValid = 0 <= t12 and t12 < 180 and cspace[t1_to_i(t12)][t2_to_i(t22)] == 1
     if firstValid and not secondValid:
         return (t11, t21)
     elif not firstValid and secondValid:
@@ -82,6 +82,7 @@ def pick_better_config(points, start):
             return (t11, t21)
         else:
             return (t12, t22)
+print(inv_kinematics(B))
 (At1, At2) = pick_better_config(inv_kinematics(A), start)
 (Bt1, Bt2) = pick_better_config(inv_kinematics(B), (At1, At2))
 (Ct1, Ct2) = pick_better_config(inv_kinematics(A), (Bt1, Bt2))
@@ -179,6 +180,8 @@ def wavefront(startAngles, endAngles):
 moves1 = wavefront(start, (At1, At2))
 moves2 = wavefront((At1, At2), (Bt1, Bt2))
 moves3 = wavefront((Bt1, Bt2), (Ct1, Ct2))
+# Moves 4 gets us back to (0, 0)
+moves4 = wavefront((Ct1, Ct2), (0, 0))
 for a, b in moves1:
     if abs(a) < 0.01:
         a = 0
@@ -203,3 +206,9 @@ for a, b in moves3:
     print("move(" + str(a) + ", " + str(b) + ");")
 print("wait1Msec(3000);")
 print("// At point A")
+for a, b in moves4:
+    if abs(a) < 0.01:
+        a = 0
+    if abs(b) < 0.01:
+        b = 0
+    print("move(" + str(a) + ", " + str(b) + ");")
